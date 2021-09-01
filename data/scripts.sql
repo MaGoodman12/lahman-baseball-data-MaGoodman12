@@ -11,26 +11,55 @@ FROM people;
 
 /*2. Find the name and height of the shortest player in the database.
 How many games did he play in? What is the name of the team for which he played?*/
-WITH p_h AS
-(
+--Shortest
 SELECT
-	namefirst,
-	namelast,
- 	MIN(height) AS shortest,
-	MAX(height) AS tallest
+ 	height
 FROM people
 WHERE height is not null
-group by namefirst, namelast, height
-order by height asc
-)
+group by height
+order by height;
 
-select shortest
-from p_h
+Select
+	namefirst,
+	namelast
+FROM people
+Where height = 43;
+
+--Tallest
+SELECT
+	height
+FROM people
+WHERE height is not null
+group by height
+order by height desc;
+
+Select
+	namefirst,
+	namelast
+FROM people
+Where height = 83;
 
 /*3. Find all players in the database who played at Vanderbilt University.
 Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues.
 Sort this list in descending order by the total salary earned.
 Which Vanderbilt player earned the most money in the majors?*/
+
+SELECT * FROM schools;
+SELECT * FROM people;
+SELECT * FROM collegeplaying;
+SELECT * FROM salaries;
+
+SELECT
+	s.playerid,
+	SUM(s.salary) AS total_salary
+FROM salaries as s
+WHERE playerid IN (
+	SELECT 
+		DISTINCT playerid
+	FROM collegeplaying as c
+	WHERE schoolid = 'vandy')
+GROUP BY playerid
+ORDER BY total_salary desc;
 
 /*4.Using the fielding table, group players into three groups based on their position:
 label players with position OF as "Outfield",
@@ -38,10 +67,42 @@ those with position "SS", "1B", "2B", and "3B" as "Infield",
 and those with position "P" or "C" as "Battery".
 Determine the number of putouts made by each of these three groups in 2016.*/
 
+SELECT * FROM fielding;
+
+WITH positions AS (
+	SELECT
+	po,
+	yearid,
+	CASE WHEN pos IN ('OF') THEN 'Outfield'
+		WHEN pos IN ('SS','1B','2B','3B') THEN 'Infield'
+	 	WHEN pos IN ('P', 'C') THEN 'Battery'
+	 	END AS position_group
+FROM fielding)
+
+SELECT
+	p.position_group,
+	SUM(po) AS total_putouts
+FROM positions as p
+WHERE yearid = '2016'
+GROUP BY position_group
+order by total_putouts desc;
+
 /*5.Find the average number of strikeouts per game by decade since 1920.
 Round the numbers you report to 2 decimal places.
 Do the same for home runs per game.
 Do you see any trends?*/
+
+select * from batting;
+
+select
+	FLOOR(yearid/10) * 10 AS decade,
+	round(avg(hr),2) as hr_avg,
+	round(avg(so),2) as so_avg
+FROM batting
+group by yearid
+order by decade desc; 
+
+
 
 /*6.Find the player who had the most success stealing bases in 2016,
 where success is measured as the percentage of stolen base attempts which are successful.
